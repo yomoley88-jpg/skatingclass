@@ -65,7 +65,6 @@ function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void
   const [rows, setRows] = useState<Record<string, RowState>>({})
   const [classDate, setClassDate] = useState(today())
   const [classFiles, setClassFiles] = useState<File[]>([])
-  const [proofNotes, setProofNotes] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState('')
@@ -97,7 +96,6 @@ function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void
       await saveAttendance({
         classDate,
         classProofFiles: classFiles,
-        proofNotes,
         rows: students.map(student => ({
           student,
           present: rows[student.id]?.present ?? false,
@@ -106,7 +104,6 @@ function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void
         })),
       })
       setClassFiles([])
-      setProofNotes('')
       await load()
       setNotice('Attendance saved with private proof records.')
     } catch (err: any) {
@@ -163,7 +160,6 @@ function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void
         <h2>Class Proof</h2>
         <p>Upload one or more private group photos before saving attendance.</p>
         <input type="file" accept="image/*" multiple onChange={event => setClassFiles(Array.from(event.target.files ?? []))} />
-        <textarea value={proofNotes} onChange={event => setProofNotes(event.target.value)} rows={3} placeholder="Proof notes for this class" />
         <button className="primary" onClick={submit} disabled={saving}>{saving ? 'Saving...' : 'Save Attendance'}</button>
       </section>
     </div>

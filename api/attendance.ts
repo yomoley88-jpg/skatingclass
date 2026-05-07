@@ -69,7 +69,6 @@ async function createAttendance(request: Request) {
 
   const payload = JSON.parse(payloadText) as {
     classDate: string
-    proofNotes: string
     rows: PayloadRow[]
   }
 
@@ -101,7 +100,7 @@ async function createAttendance(request: Request) {
       id: sessionId,
       class_date: payload.classDate,
       proof_photo_urls: classPaths,
-      proof_notes: payload.proofNotes?.trim() || null,
+      proof_notes: null,
       marked_by: 'admin',
     })
     if (sessionError) throw sessionError

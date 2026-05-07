@@ -80,13 +80,11 @@ export async function createStudent(input: CreateStudentInput): Promise<Student>
 export async function saveAttendance(params: {
   classDate: string
   classProofFiles: File[]
-  proofNotes: string
   rows: StudentAttendanceInput[]
 }) {
   const form = new FormData()
   form.set('payload', JSON.stringify({
     classDate: params.classDate,
-    proofNotes: params.proofNotes,
     rows: params.rows.map(row => ({
       student: row.student,
       present: row.present,
