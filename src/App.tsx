@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Session } from '@supabase/supabase-js'
 import {
   getActiveStudents,
   getAttendanceHistory,
@@ -7,15 +6,12 @@ import {
   getStudentHistory,
   markPaid,
   saveAttendance,
-  signIn,
-  signOut,
   signedProofUrl,
   type AttendanceRecord,
   type AttendanceSession,
   type Student,
   type StudentHistoryRecord,
 } from './attendanceApi'
-import { isSupabaseConfigured, supabase } from './supabase'
 
 type View = 'attendance' | 'history' | 'student'
 type RowState = { present: boolean; proofFile: File | null; proofNotes: string; open: boolean }
@@ -63,41 +59,7 @@ function SignedImage({ path, label }: { path: string; label: string }) {
   return <img className="proof-image" src={url} alt={label} />
 }
 
-function SignInView() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  async function submit(event: React.FormEvent) {
-    event.preventDefault()
-    setLoading(true)
-    setError('')
-    try {
-      await signIn(email, password)
-    } catch (err: any) {
-      setError(err.message ?? 'Could not sign in.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <main className="auth-screen">
-      <form className="auth-panel" onSubmit={submit}>
-        <h1>Skating Attendance</h1>
-        <p>Admin sign-in for attendance proof and payment tracking.</p>
-        {!isSupabaseConfigured && <div className="alert danger">Add Supabase env vars before signing in.</div>}
-        {error && <div className="alert danger">{error}</div>}
-        <label>Email<input value={email} onChange={event => setEmail(event.target.value)} type="email" required /></label>
-        <label>Password<input value={password} onChange={event => setPassword(event.target.value)} type="password" required /></label>
-        <button className="primary" disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
-      </form>
-    </main>
-  )
-}
-
-function AttendanceView({ session, onOpenStudent }: { session: Session; onOpenStudent: (id: string) => void }) {
+function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void }) {
   const [students, setStudents] = useState<Student[]>([])
   const [rows, setRows] = useState<Record<string, RowState>>({})
   const [classDate, setClassDate] = useState(today())
@@ -135,7 +97,6 @@ function AttendanceView({ session, onOpenStudent }: { session: Session; onOpenSt
         classDate,
         classProofFiles: classFiles,
         proofNotes,
-        markedBy: session.user.id,
         rows: students.map(student => ({
           student,
           present: rows[student.id]?.present ?? false,
@@ -312,17 +273,8 @@ function StudentProfile({ studentId }: { studentId: string }) {
 }
 
 export default function App() {
-  const [session, setSession] = useState<Session | null>(null)
   const [view, setView] = useState<View>('attendance')
   const [studentId, setStudentId] = useState('')
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
-    return () => subscription.unsubscribe()
-  }, [])
-
-  if (!session) return <SignInView />
 
   function openStudent(id: string) {
     setStudentId(id)
@@ -336,14 +288,13 @@ export default function App() {
           <h1>Skating Attendance</h1>
           <p>Proof, lesson counts, and payments</p>
         </div>
-        <button className="ghost" onClick={signOut}>Sign Out</button>
       </header>
       <nav className="tabs">
         <button className={view === 'attendance' ? 'active' : ''} onClick={() => setView('attendance')}>Attendance</button>
         <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>History</button>
         {view === 'student' && <button className="active">Student</button>}
       </nav>
-      {view === 'attendance' && <AttendanceView session={session} onOpenStudent={openStudent} />}
+      {view === 'attendance' && <AttendanceView onOpenStudent={openStudent} />}
       {view === 'history' && <HistoryView onOpenStudent={openStudent} />}
       {view === 'student' && studentId && <StudentProfile studentId={studentId} />}
     </main>

@@ -14,15 +14,19 @@ Run `supabase/schema.sql` in the Supabase SQL editor before using the app.
 
 ## Admin Access
 
-The app uses the browser Supabase client with the anon/publishable key only. It never uses a service role key.
+The app has no in-app login screen. Protect the Vercel project itself so only admins can open it.
 
-An authenticated user is treated as admin if one of these is true:
+Because proof photos are private, the browser does not talk directly to Supabase for admin operations. It calls Vercel API routes, and those routes use `SUPABASE_SERVICE_ROLE_KEY` from server-only environment variables.
 
-- `app_metadata.role` is `admin`
-- `app_metadata.is_admin` is `true`
-- their user id exists in `public.admin_users`
+Required Vercel environment variables:
 
-All student, attendance, and storage access is also protected by RLS. Proof photos are stored as private paths in the `attendance-proof` bucket, and the app creates short-lived signed URLs only after admin login.
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-or-publishable-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` must only be set in Vercel/local server env. Never expose it in frontend code or commit it to GitHub.
 
 ## Core Flow
 

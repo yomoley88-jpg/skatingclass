@@ -1,7 +1,3 @@
-import { supabase } from './supabase'
-
-export const PROOF_BUCKET = 'attendance-proof'
-
 export interface Student {
   id: string
   name: string
@@ -44,207 +40,76 @@ export interface StudentAttendanceInput {
   proofNotes: string
 }
 
-function proofPaths(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
-}
+async function request<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, init)
+  const data = await response.json().catch(() => ({}))
 
-function extension(file: File) {
-  return file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
-}
+  if (!response.ok) {
+    throw new Error(data.error ?? 'Request failed.')
+  }
 
-function safeName(file: File, fallback: string) {
-  const stem = file.name
-    .replace(/\.[^.]+$/, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 40) || fallback.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-
-  return `${stem}-${crypto.randomUUID()}.${extension(file)}`
-}
-
-async function uploadProof(file: File, path: string) {
-  if (!file.type.startsWith('image/')) throw new Error(`${file.name} is not an image file.`)
-
-  const { error } = await supabase.storage
-    .from(PROOF_BUCKET)
-    .upload(path, file, { contentType: file.type || undefined, cacheControl: '3600', upsert: false })
-
-  if (error) throw new Error(`Proof photo upload failed: ${error.message}`)
-  return path
-}
-
-export async function signIn(email: string, password: string) {
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw new Error(error.message)
-}
-
-export async function signOut() {
-  await supabase.auth.signOut()
+  return data as T
 }
 
 export async function getActiveStudents(): Promise<Student[]> {
-  const { data, error } = await supabase
-    .from('students')
-    .select('id,name,active,current_lesson_count')
-    .eq('active', true)
-    .order('name')
-
-  if (error) throw new Error(error.message)
-  return (data ?? []) as Student[]
+  const data = await request<{ students: Student[] }>('/api/students')
+  return data.students
 }
 
 export async function saveAttendance(params: {
   classDate: string
   classProofFiles: File[]
   proofNotes: string
-  markedBy: string | null
   rows: StudentAttendanceInput[]
 }) {
-  const sessionId = crypto.randomUUID()
-  const uploaded: string[] = []
+  const form = new FormData()
+  form.set('payload', JSON.stringify({
+    classDate: params.classDate,
+    proofNotes: params.proofNotes,
+    rows: params.rows.map(row => ({
+      student: row.student,
+      present: row.present,
+      proofNotes: row.proofNotes,
+    })),
+  }))
 
-  try {
-    const classPaths = await Promise.all(params.classProofFiles.map((file, index) => {
-      const path = `${sessionId}/class/${safeName(file, `class-${index + 1}`)}`
-      uploaded.push(path)
-      return uploadProof(file, path)
-    }))
+  params.classProofFiles.forEach(file => form.append('classProofFiles', file))
+  params.rows.forEach(row => {
+    if (row.proofFile) form.append(`studentProof:${row.student.id}`, row.proofFile)
+  })
 
-    const studentProofs = new Map<string, string>()
-    await Promise.all(params.rows.map(async row => {
-      if (!row.proofFile) return
-      const path = `${sessionId}/students/${row.student.id}/${safeName(row.proofFile, row.student.name)}`
-      uploaded.push(path)
-      await uploadProof(row.proofFile, path)
-      studentProofs.set(row.student.id, path)
-    }))
+  const data = await request<{ sessionId: string }>('/api/attendance', {
+    method: 'POST',
+    body: form,
+  })
 
-    const { error: sessionError } = await supabase.from('attendance_sessions').insert({
-      id: sessionId,
-      class_date: params.classDate,
-      proof_photo_urls: classPaths,
-      proof_notes: params.proofNotes.trim() || null,
-      marked_by: params.markedBy,
-    })
-    if (sessionError) throw new Error(sessionError.message)
-
-    const records = params.rows.map(row => {
-      const before = row.student.current_lesson_count
-      const after = row.present ? before + 1 : before
-      return {
-        session_id: sessionId,
-        student_id: row.student.id,
-        present: row.present,
-        lesson_count_before: before,
-        lesson_count_after: after,
-        student_proof_photo_url: studentProofs.get(row.student.id) ?? null,
-        proof_notes: row.proofNotes.trim() || null,
-      }
-    })
-
-    const { error: recordsError } = await supabase.from('attendance_records').insert(records)
-    if (recordsError) throw new Error(recordsError.message)
-
-    await Promise.all(params.rows.filter(row => row.present).map(row => {
-      return supabase
-        .from('students')
-        .update({ current_lesson_count: row.student.current_lesson_count + 1 })
-        .eq('id', row.student.id)
-    }))
-
-    return sessionId
-  } catch (error) {
-    if (uploaded.length > 0) await supabase.storage.from(PROOF_BUCKET).remove(uploaded)
-    throw error
-  }
+  return data.sessionId
 }
 
 export async function getAttendanceHistory(): Promise<AttendanceSession[]> {
-  const { data, error } = await supabase
-    .from('attendance_sessions')
-    .select(`
-      id,
-      class_date,
-      proof_photo_urls,
-      proof_notes,
-      marked_by,
-      created_at,
-      records:attendance_records(
-        id,
-        session_id,
-        student_id,
-        present,
-        lesson_count_before,
-        lesson_count_after,
-        student_proof_photo_url,
-        proof_notes,
-        check_in_time,
-        created_at,
-        student:students(id,name)
-      )
-    `)
-    .order('class_date', { ascending: false })
-    .order('created_at', { ascending: false })
-
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((session: any) => ({
-    ...session,
-    proof_photo_urls: proofPaths(session.proof_photo_urls),
-  })) as AttendanceSession[]
+  const data = await request<{ sessions: AttendanceSession[] }>('/api/attendance')
+  return data.sessions
 }
 
 export async function getStudent(studentId: string): Promise<Student> {
-  const { data, error } = await supabase
-    .from('students')
-    .select('id,name,active,current_lesson_count')
-    .eq('id', studentId)
-    .single()
-
-  if (error) throw new Error(error.message)
-  return data as Student
+  const data = await request<{ student: Student }>(`/api/student?id=${encodeURIComponent(studentId)}`)
+  return data.student
 }
 
 export async function getStudentHistory(studentId: string): Promise<StudentHistoryRecord[]> {
-  const { data, error } = await supabase
-    .from('attendance_records')
-    .select(`
-      id,
-      session_id,
-      student_id,
-      present,
-      lesson_count_before,
-      lesson_count_after,
-      student_proof_photo_url,
-      proof_notes,
-      check_in_time,
-      created_at,
-      session:attendance_sessions(id,class_date,created_at,proof_photo_urls)
-    `)
-    .eq('student_id', studentId)
-    .order('created_at', { ascending: false })
-
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((record: any) => ({
-    ...record,
-    session: {
-      ...record.session,
-      proof_photo_urls: proofPaths(record.session?.proof_photo_urls),
-    },
-  })) as StudentHistoryRecord[]
+  const data = await request<{ history: StudentHistoryRecord[] }>(`/api/student-history?id=${encodeURIComponent(studentId)}`)
+  return data.history
 }
 
 export async function markPaid(studentId: string) {
-  const { error } = await supabase
-    .from('students')
-    .update({ current_lesson_count: 0 })
-    .eq('id', studentId)
-
-  if (error) throw new Error(error.message)
+  await request<{ ok: true }>('/api/mark-paid', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ studentId }),
+  })
 }
 
 export async function signedProofUrl(path: string) {
-  const { data, error } = await supabase.storage.from(PROOF_BUCKET).createSignedUrl(path, 300)
-  if (error) throw new Error(error.message)
+  const data = await request<{ signedUrl: string }>(`/api/proof-url?path=${encodeURIComponent(path)}`)
   return data.signedUrl
 }
