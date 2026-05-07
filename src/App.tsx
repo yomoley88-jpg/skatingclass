@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  createStudent,
   getActiveStudents,
   getAttendanceHistory,
   getStudent,
@@ -13,7 +14,7 @@ import {
   type StudentHistoryRecord,
 } from './attendanceApi'
 
-type View = 'attendance' | 'history' | 'student'
+type View = 'attendance' | 'history' | 'students' | 'student'
 type RowState = { present: boolean; proofFile: File | null; proofNotes: string; open: boolean }
 
 function today() {
@@ -222,6 +223,91 @@ function HistoryRecord({ record, onOpenStudent }: { record: AttendanceRecord; on
   )
 }
 
+function StudentsView({ onOpenStudent }: { onOpenStudent: (id: string) => void }) {
+  const [students, setStudents] = useState<Student[]>([])
+  const [name, setName] = useState('')
+  const [parentName, setParentName] = useState('')
+  const [parentPhone, setParentPhone] = useState('')
+  const [notes, setNotes] = useState('')
+  const [currentLessonCount, setCurrentLessonCount] = useState(0)
+  const [saving, setSaving] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    load().catch(err => setError(err.message ?? 'Could not load students.'))
+  }, [])
+
+  async function load() {
+    const active = await getActiveStudents()
+    setStudents(active)
+  }
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault()
+    setSaving(true)
+    setError('')
+    setNotice('')
+
+    try {
+      const student = await createStudent({ name, parentName, parentPhone, notes, currentLessonCount })
+      setName('')
+      setParentName('')
+      setParentPhone('')
+      setNotes('')
+      setCurrentLessonCount(0)
+      await load()
+      setNotice(`${student.name} added.`)
+    } catch (err: any) {
+      setError(err.message ?? 'Could not add student.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="stack">
+      {notice && <div className="alert success">{notice}</div>}
+      {error && <div className="alert danger">{error}</div>}
+      <form className="panel student-form" onSubmit={submit}>
+        <div className="panel-head">
+          <div>
+            <h2>Add Student</h2>
+            <p>Enter student and parent details for attendance tracking.</p>
+          </div>
+        </div>
+        <div className="form-grid">
+          <label>Student name<input value={name} onChange={event => setName(event.target.value)} required /></label>
+          <label>Parent name<input value={parentName} onChange={event => setParentName(event.target.value)} /></label>
+          <label>Parent phone<input value={parentPhone} onChange={event => setParentPhone(event.target.value)} inputMode="tel" /></label>
+          <label>Current lesson count<input type="number" min={0} value={currentLessonCount} onChange={event => setCurrentLessonCount(Number(event.target.value))} /></label>
+          <label className="full">Notes<textarea value={notes} onChange={event => setNotes(event.target.value)} rows={3} /></label>
+        </div>
+        <button className="primary form-submit" disabled={saving}>{saving ? 'Adding...' : 'Add Student'}</button>
+      </form>
+
+      <section className="panel">
+        <div className="panel-head">
+          <div>
+            <h2>Active Students</h2>
+            <p>{students.length} students</p>
+          </div>
+        </div>
+        {students.length === 0 ? <div className="empty">No students yet.</div> : students.map(student => (
+          <div className="student-detail-row" key={student.id}>
+            <div>
+              <button className="student-name" onClick={() => onOpenStudent(student.id)}>{student.name}</button>
+              <p>{student.parent_name || 'No parent name'}{student.parent_phone ? ` · ${student.parent_phone}` : ''}</p>
+              {student.notes && <p>{student.notes}</p>}
+            </div>
+            <span className={`badge ${lessonBadge(student.current_lesson_count).tone}`}>{lessonBadge(student.current_lesson_count).text}</span>
+          </div>
+        ))}
+      </section>
+    </div>
+  )
+}
+
 function StudentProfile({ studentId }: { studentId: string }) {
   const [student, setStudent] = useState<Student | null>(null)
   const [history, setHistory] = useState<StudentHistoryRecord[]>([])
@@ -250,6 +336,10 @@ function StudentProfile({ studentId }: { studentId: string }) {
           <div>
             <h2>{student.name}</h2>
             <p>{paymentStatus(student.current_lesson_count)}</p>
+            {(student.parent_name || student.parent_phone) && (
+              <p>{student.parent_name || 'Parent'}{student.parent_phone ? ` · ${student.parent_phone}` : ''}</p>
+            )}
+            {student.notes && <p>{student.notes}</p>}
           </div>
           {canRecordPayment(student.current_lesson_count) && <button className="success-button" onClick={paid}>Mark Paid</button>}
         </section>
@@ -291,10 +381,12 @@ export default function App() {
       </header>
       <nav className="tabs">
         <button className={view === 'attendance' ? 'active' : ''} onClick={() => setView('attendance')}>Attendance</button>
+        <button className={view === 'students' ? 'active' : ''} onClick={() => setView('students')}>Students</button>
         <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>History</button>
         {view === 'student' && <button className="active">Student</button>}
       </nav>
       {view === 'attendance' && <AttendanceView onOpenStudent={openStudent} />}
+      {view === 'students' && <StudentsView onOpenStudent={openStudent} />}
       {view === 'history' && <HistoryView onOpenStudent={openStudent} />}
       {view === 'student' && studentId && <StudentProfile studentId={studentId} />}
     </main>

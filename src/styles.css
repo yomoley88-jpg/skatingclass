@@ -27,6 +27,13 @@ input, textarea {
   background: #fff;
   min-width: 0;
 }
+label {
+  display: grid;
+  gap: 6px;
+  color: #343a31;
+  font-size: 13px;
+  font-weight: 800;
+}
 textarea { resize: vertical; }
 h1, h2, p { margin: 0; }
 h1 { font-size: 24px; letter-spacing: 0; }
@@ -138,6 +145,21 @@ h2 { font-size: 17px; letter-spacing: 0; }
   padding: 13px 14px;
 }
 
+.student-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding: 13px 14px;
+}
+
+.student-detail-row p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
 .row-main {
   display: grid;
   grid-template-columns: 26px minmax(150px, 1fr) auto auto;
@@ -196,6 +218,22 @@ h2 { font-size: 17px; letter-spacing: 0; }
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
   gap: 9px;
   margin-top: 10px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 14px 14px;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.form-submit {
+  margin: 0 14px 14px;
+  width: calc(100% - 28px);
 }
 
 .primary, .success-button {
@@ -314,6 +352,13 @@ h2 { font-size: 17px; letter-spacing: 0; }
   }
   .proof-fields {
     grid-template-columns: 1fr;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .student-detail-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
   .student-history span {
     grid-column: 1 / -1;

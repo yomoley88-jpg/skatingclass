@@ -29,10 +29,18 @@ grant execute on function app_private.is_admin() to authenticated;
 create table if not exists public.students (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  parent_name text,
+  parent_phone text,
+  notes text,
   active boolean not null default true,
   current_lesson_count integer not null default 0,
   created_at timestamptz not null default now()
 );
+
+alter table public.students
+  add column if not exists parent_name text,
+  add column if not exists parent_phone text,
+  add column if not exists notes text;
 
 create table if not exists public.attendance_sessions (
   id uuid primary key default gen_random_uuid(),

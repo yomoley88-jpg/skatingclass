@@ -1,6 +1,9 @@
 export interface Student {
   id: string
   name: string
+  parent_name: string | null
+  parent_phone: string | null
+  notes: string | null
   active: boolean
   current_lesson_count: number
 }
@@ -40,6 +43,14 @@ export interface StudentAttendanceInput {
   proofNotes: string
 }
 
+export interface CreateStudentInput {
+  name: string
+  parentName: string
+  parentPhone: string
+  notes: string
+  currentLessonCount: number
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init)
   const data = await response.json().catch(() => ({}))
@@ -54,6 +65,16 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 export async function getActiveStudents(): Promise<Student[]> {
   const data = await request<{ students: Student[] }>('/api/students')
   return data.students
+}
+
+export async function createStudent(input: CreateStudentInput): Promise<Student> {
+  const data = await request<{ student: Student }>('/api/students', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+
+  return data.student
 }
 
 export async function saveAttendance(params: {

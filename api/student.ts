@@ -9,7 +9,7 @@ export default async function handler(request: Request) {
 
     const { data, error } = await getSupabaseAdmin()
       .from('students')
-      .select('id,name,active,current_lesson_count')
+      .select('id,name,parent_name,parent_phone,notes,active,current_lesson_count')
       .eq('id', id)
       .single()
 
