@@ -62,6 +62,7 @@ function SignedImage({ path, label }: { path: string; label: string }) {
 
 function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void }) {
   const [students, setStudents] = useState<Student[]>([])
+  const [sessions, setSessions] = useState<AttendanceSession[]>([])
   const [rows, setRows] = useState<Record<string, RowState>>({})
   const [classDate, setClassDate] = useState(today())
   const [classFiles, setClassFiles] = useState<File[]>([])
@@ -76,8 +77,12 @@ function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void
 
   async function load() {
     setLoading(true)
-    const active = await getActiveStudents()
+    const [active, history] = await Promise.all([
+      getActiveStudents(),
+      getAttendanceHistory(),
+    ])
     setStudents(active)
+    setSessions(history)
     setRows(Object.fromEntries(active.map(student => [student.id, { present: false, proofFile: null, proofNotes: '', open: false }])))
     setLoading(false)
   }
@@ -161,6 +166,24 @@ function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void
         <p>Upload one or more private group photos before saving attendance.</p>
         <input type="file" accept="image/*" multiple onChange={event => setClassFiles(Array.from(event.target.files ?? []))} />
         <button className="primary" onClick={submit} disabled={saving}>{saving ? 'Saving...' : 'Save Attendance'}</button>
+        <div className="lesson-proof-list">
+          <h3>Lesson Proofs</h3>
+          {sessions.length === 0 ? (
+            <div className="empty compact">No saved lessons yet.</div>
+          ) : sessions.map(session => (
+            <div className="lesson-proof-row" key={session.id}>
+              <div className="lesson-proof-date">
+                <strong>{dateLabel(session.class_date)}</strong>
+                <span>{timeLabel(session.created_at)}</span>
+              </div>
+              <div className="lesson-proof-photos">
+                {session.proof_photo_urls.length > 0
+                  ? session.proof_photo_urls.map(path => <SignedImage key={path} path={path} label={`Class proof for ${dateLabel(session.class_date)}`} />)
+                  : <span>No class photo</span>}
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   )

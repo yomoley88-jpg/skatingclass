@@ -128,6 +128,59 @@ h2 { font-size: 17px; letter-spacing: 0; }
 .proof-panel > h2 { margin-bottom: 4px; }
 .proof-panel > input, .proof-panel > textarea, .proof-panel > button { width: calc(100% - 28px); }
 
+.lesson-proof-list {
+  border-top: 1px solid var(--line);
+  margin-top: 2px;
+  padding: 14px;
+}
+
+.lesson-proof-list h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+.lesson-proof-row {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.lesson-proof-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.lesson-proof-date {
+  display: grid;
+  gap: 3px;
+}
+
+.lesson-proof-date strong {
+  font-size: 13px;
+}
+
+.lesson-proof-date span,
+.lesson-proof-photos span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.lesson-proof-photos {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.lesson-proof-photos .proof-image,
+.lesson-proof-photos .proof-placeholder {
+  width: 72px;
+  height: 72px;
+}
+
 .panel-head, .session-head, .profile-head {
   width: 100%;
   display: flex;
@@ -259,6 +312,7 @@ h2 { font-size: 17px; letter-spacing: 0; }
 .alert.danger { background: var(--danger-bg); color: var(--danger); }
 .alert.success { background: var(--good-bg); color: var(--good); }
 .empty { padding: 24px 14px; color: var(--muted); font-size: 13px; }
+.empty.compact { padding: 4px 0 0; }
 
 .session-head small {
   display: block;
@@ -352,6 +406,10 @@ h2 { font-size: 17px; letter-spacing: 0; }
   }
   .proof-fields {
     grid-template-columns: 1fr;
+  }
+  .lesson-proof-row {
+    grid-template-columns: 1fr;
+    align-items: start;
   }
   .form-grid {
     grid-template-columns: 1fr;
