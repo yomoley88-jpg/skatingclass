@@ -1,0 +1,321 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f6f7f4;
+  color: #20231f;
+  --surface: #ffffff;
+  --line: #dfe3dc;
+  --muted: #6e7569;
+  --accent: #2f6f65;
+  --accent-dark: #204d47;
+  --danger: #b33b36;
+  --danger-bg: #f8e7e5;
+  --warn: #9b691c;
+  --warn-bg: #fff0ce;
+  --good: #24724d;
+  --good-bg: #e2f4ea;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: #f6f7f4; }
+button, input, textarea { font: inherit; }
+button { cursor: pointer; border: 0; }
+input, textarea {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 11px;
+  background: #fff;
+  min-width: 0;
+}
+textarea { resize: vertical; }
+h1, h2, p { margin: 0; }
+h1 { font-size: 24px; letter-spacing: 0; }
+h2 { font-size: 17px; letter-spacing: 0; }
+
+.auth-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.auth-panel {
+  width: min(420px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px;
+  display: grid;
+  gap: 14px;
+  box-shadow: 0 16px 40px rgba(36, 42, 32, 0.08);
+}
+
+.auth-panel p, .topbar p, .panel-head p, .proof-panel p, .profile-head p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.auth-panel label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 22px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #edf0ea;
+  margin-bottom: 16px;
+}
+
+.tabs button, .ghost {
+  border-radius: 7px;
+  padding: 9px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tabs button.active {
+  background: #fff;
+  color: #20231f;
+  box-shadow: 0 1px 2px rgba(20, 25, 18, 0.08);
+}
+
+.stack {
+  display: grid;
+  gap: 14px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.panel > h2, .proof-panel > p, .proof-panel > input, .proof-panel > textarea, .proof-panel > button {
+  margin: 0 14px 12px;
+}
+
+.proof-panel { padding-top: 14px; }
+.proof-panel > h2 { margin-bottom: 4px; }
+.proof-panel > input, .proof-panel > textarea, .proof-panel > button { width: calc(100% - 28px); }
+
+.panel-head, .session-head, .profile-head {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  text-align: left;
+}
+
+.date-input { width: 154px; }
+
+.student-row {
+  border-top: 1px solid var(--line);
+  padding: 13px 14px;
+}
+
+.row-main {
+  display: grid;
+  grid-template-columns: 26px minmax(150px, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.checkbox {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+}
+
+.student-name {
+  color: #20231f;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  font-weight: 850;
+}
+
+.counts {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.badge.neutral { background: #eef0ec; color: var(--muted); }
+.badge.warn { background: var(--warn-bg); color: var(--warn); }
+.badge.danger { background: var(--danger-bg); color: var(--danger); }
+.badge.good { background: var(--good-bg); color: var(--good); }
+
+.link-button {
+  margin-top: 9px;
+  color: var(--accent);
+  background: transparent;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.proof-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.primary, .success-button {
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 10px 13px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 900;
+}
+
+.primary:disabled { background: #bac4b8; cursor: wait; }
+.success-button { background: var(--good); }
+.small { min-height: 34px; margin-top: 10px; font-size: 12px; }
+
+.alert {
+  border-radius: 8px;
+  padding: 11px 12px;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.alert.danger { background: var(--danger-bg); color: var(--danger); }
+.alert.success { background: var(--good-bg); color: var(--good); }
+.empty { padding: 24px 14px; color: var(--muted); font-size: 13px; }
+
+.session-head small {
+  display: block;
+  color: var(--muted);
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+.session-head b { color: var(--accent); font-size: 13px; }
+.session-body { border-top: 1px solid var(--line); }
+
+.proof-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.proof-image, .proof-placeholder {
+  width: 92px;
+  height: 92px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.proof-placeholder {
+  display: grid;
+  place-items: center;
+  background: #eef0ec;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.notes {
+  padding: 0 14px 12px;
+  color: #3d4439;
+  font-size: 13px;
+}
+
+.history-record {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.history-record p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.history-record .proof-image, .history-record .proof-placeholder {
+  grid-column: 1 / -1;
+}
+
+.history-record .notes {
+  grid-column: 1 / -1;
+  padding: 0;
+}
+
+.profile-head { border-bottom: 1px solid var(--line); }
+.student-history {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  align-items: center;
+}
+
+.student-history span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .app { padding: 14px; }
+  .topbar { align-items: flex-start; }
+  .row-main, .student-history, .history-record {
+    grid-template-columns: 26px 1fr;
+  }
+  .row-main .badge, .counts {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .proof-fields {
+    grid-template-columns: 1fr;
+  }
+  .student-history span {
+    grid-column: 1 / -1;
+  }
+}
