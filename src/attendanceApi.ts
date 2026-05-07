@@ -121,6 +121,14 @@ export async function markPaid(studentId: string) {
   })
 }
 
+export async function removeStudent(studentId: string) {
+  await request<{ ok: true }>('/api/remove-student', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ studentId }),
+  })
+}
+
 export async function signedProofUrl(path: string) {
   const data = await request<{ signedUrl: string }>(`/api/proof-url?path=${encodeURIComponent(path)}`)
   return data.signedUrl

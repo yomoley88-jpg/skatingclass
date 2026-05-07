@@ -225,10 +225,10 @@ h2 { font-size: 17px; letter-spacing: 0; }
 
 .roster-row {
   display: grid;
-  grid-template-columns: minmax(140px, 1.3fr) minmax(120px, 1fr) minmax(120px, 1fr) repeat(4, minmax(104px, .8fr));
+  grid-template-columns: minmax(140px, 1.3fr) minmax(120px, 1fr) minmax(120px, 1fr) repeat(4, minmax(104px, .8fr)) minmax(88px, .7fr);
   gap: 10px;
   align-items: center;
-  min-width: 860px;
+  min-width: 960px;
   padding: 11px 14px;
   border-top: 1px solid var(--line);
 }
@@ -286,7 +286,7 @@ h2 { font-size: 17px; letter-spacing: 0; }
   width: calc(100% - 28px);
 }
 
-.primary, .success-button {
+.primary, .success-button, .danger-button {
   min-height: 42px;
   border-radius: 8px;
   padding: 10px 13px;
@@ -297,6 +297,7 @@ h2 { font-size: 17px; letter-spacing: 0; }
 
 .primary:disabled { background: #bac4b8; cursor: wait; }
 .success-button { background: var(--good); }
+.danger-button { background: var(--danger); min-height: 34px; font-size: 12px; }
 .small { min-height: 34px; margin-top: 10px; font-size: 12px; }
 
 .alert {

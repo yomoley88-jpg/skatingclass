@@ -6,6 +6,7 @@ import {
   getStudent,
   getStudentHistory,
   markPaid,
+  removeStudent,
   saveAttendance,
   signedProofUrl,
   type AttendanceRecord,
@@ -280,6 +281,21 @@ function StudentsView({ onOpenStudent }: { onOpenStudent: (id: string) => void }
     }
   }
 
+  async function remove(student: Student) {
+    const confirmed = window.confirm(`Remove ${student.name} from active students? Attendance history will be kept.`)
+    if (!confirmed) return
+
+    setError('')
+    setNotice('')
+    try {
+      await removeStudent(student.id)
+      await load()
+      setNotice(`${student.name} removed from active students.`)
+    } catch (err: any) {
+      setError(err.message ?? 'Could not remove student.')
+    }
+  }
+
   function classDatesForStudent(studentId: string) {
     const slots: Record<number, string> = {}
     const records = sessions
@@ -340,6 +356,7 @@ function StudentsView({ onOpenStudent }: { onOpenStudent: (id: string) => void }
               <span>Class 2</span>
               <span>Class 3</span>
               <span>Class 4</span>
+              <span>Action</span>
             </div>
             {students.map(student => {
               const dates = classDatesForStudent(student.id)
@@ -351,6 +368,7 @@ function StudentsView({ onOpenStudent }: { onOpenStudent: (id: string) => void }
                   {[1, 2, 3, 4].map(slot => (
                     <span key={slot}>{dates[slot] ? dateLabel(dates[slot]) : '-'}</span>
                   ))}
+                  <button className="danger-button" type="button" onClick={() => remove(student)}>Remove</button>
                 </div>
               )
             })}
