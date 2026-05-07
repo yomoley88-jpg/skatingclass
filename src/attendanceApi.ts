@@ -39,8 +39,6 @@ export interface StudentHistoryRecord extends AttendanceRecord {
 export interface StudentAttendanceInput {
   student: Student
   present: boolean
-  proofFile: File | null
-  proofNotes: string
 }
 
 export interface CreateStudentInput {
@@ -87,14 +85,10 @@ export async function saveAttendance(params: {
     rows: params.rows.map(row => ({
       student: row.student,
       present: row.present,
-      proofNotes: row.proofNotes,
     })),
   }))
 
   params.classProofFiles.forEach(file => form.append('classProofFiles', file))
-  params.rows.forEach(row => {
-    if (row.proofFile) form.append(`studentProof:${row.student.id}`, row.proofFile)
-  })
 
   const data = await request<{ sessionId: string }>('/api/attendance', {
     method: 'POST',

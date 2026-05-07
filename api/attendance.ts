@@ -12,7 +12,6 @@ export const config = { runtime: 'edge' }
 interface PayloadRow {
   student: { id: string; name: string; current_lesson_count: number }
   present: boolean
-  proofNotes: string
 }
 
 export default async function handler(request: Request) {
@@ -83,17 +82,6 @@ async function createAttendance(request: Request) {
       return uploadProof(file, path)
     }))
 
-    const studentProofs = new Map<string, string>()
-    await Promise.all(payload.rows.map(async row => {
-      const file = form.get(`studentProof:${row.student.id}`)
-      if (!(file instanceof File)) return
-
-      const path = `${sessionId}/students/${row.student.id}/${safeFileName(file, row.student.name)}`
-      uploaded.push(path)
-      await uploadProof(file, path)
-      studentProofs.set(row.student.id, path)
-    }))
-
     const admin = getSupabaseAdmin()
 
     const { error: sessionError } = await admin.from('attendance_sessions').insert({
@@ -115,8 +103,8 @@ async function createAttendance(request: Request) {
         present: row.present,
         lesson_count_before: before,
         lesson_count_after: after,
-        student_proof_photo_url: studentProofs.get(row.student.id) ?? null,
-        proof_notes: row.proofNotes?.trim() || null,
+        student_proof_photo_url: null,
+        proof_notes: null,
       }
     })
 

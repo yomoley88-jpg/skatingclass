@@ -15,7 +15,7 @@ import {
 } from './attendanceApi'
 
 type View = 'attendance' | 'history' | 'students' | 'student'
-type RowState = { present: boolean; proofFile: File | null; proofNotes: string; open: boolean }
+type RowState = { present: boolean }
 
 function today() {
   return new Date().toISOString().slice(0, 10)
@@ -83,7 +83,7 @@ function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void
     ])
     setStudents(active)
     setSessions(history)
-    setRows(Object.fromEntries(active.map(student => [student.id, { present: false, proofFile: null, proofNotes: '', open: false }])))
+    setRows(Object.fromEntries(active.map(student => [student.id, { present: false }])))
     setLoading(false)
   }
 
@@ -104,8 +104,6 @@ function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void
         rows: students.map(student => ({
           student,
           present: rows[student.id]?.present ?? false,
-          proofFile: rows[student.id]?.proofFile ?? null,
-          proofNotes: rows[student.id]?.proofNotes ?? '',
         })),
       })
       setClassFiles([])
@@ -149,13 +147,6 @@ function AttendanceView({ onOpenStudent }: { onOpenStudent: (id: string) => void
                 <div className="counts">Before {student.current_lesson_count}/4 · after {after}/4</div>
                 <span className={`badge ${badge.tone}`}>{badge.text}</span>
               </div>
-              <button className="link-button" onClick={() => patchRow(student.id, { open: !row?.open })}>{row?.open ? 'Hide individual proof' : 'Add individual proof'}</button>
-              {row?.open && (
-                <div className="proof-fields">
-                  <input type="file" accept="image/*" onChange={event => patchRow(student.id, { proofFile: event.target.files?.[0] ?? null })} />
-                  <textarea value={row.proofNotes} onChange={event => patchRow(student.id, { proofNotes: event.target.value })} rows={2} placeholder="Optional student proof notes" />
-                </div>
-              )}
               {canRecordPayment(student.current_lesson_count) && <button className="small success-button" onClick={() => paid(student)}>Mark Paid</button>}
             </div>
           )
