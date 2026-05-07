@@ -198,21 +198,6 @@ h2 { font-size: 17px; letter-spacing: 0; }
   padding: 13px 14px;
 }
 
-.student-detail-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  border-top: 1px solid var(--line);
-  padding: 13px 14px;
-}
-
-.student-detail-row p {
-  color: var(--muted);
-  font-size: 12px;
-  margin-top: 3px;
-}
-
 .row-main {
   display: grid;
   grid-template-columns: 26px minmax(150px, 1fr) auto auto;
@@ -232,6 +217,34 @@ h2 { font-size: 17px; letter-spacing: 0; }
   padding: 0;
   text-align: left;
   font-weight: 850;
+}
+
+.roster-table {
+  overflow-x: auto;
+}
+
+.roster-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.3fr) minmax(120px, 1fr) minmax(120px, 1fr) repeat(4, minmax(104px, .8fr));
+  gap: 10px;
+  align-items: center;
+  min-width: 860px;
+  padding: 11px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.roster-row span {
+  color: #3d4439;
+  font-size: 12px;
+}
+
+.roster-head {
+  background: #f4f6f1;
+  font-weight: 900;
+}
+
+.roster-head span {
+  color: var(--muted);
 }
 
 .counts {
@@ -413,10 +426,6 @@ h2 { font-size: 17px; letter-spacing: 0; }
   }
   .form-grid {
     grid-template-columns: 1fr;
-  }
-  .student-detail-row {
-    align-items: flex-start;
-    flex-direction: column;
   }
   .student-history span {
     grid-column: 1 / -1;

@@ -48,7 +48,6 @@ export interface CreateStudentInput {
   parentName: string
   parentPhone: string
   notes: string
-  currentLessonCount: number
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {

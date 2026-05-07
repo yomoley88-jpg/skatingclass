@@ -25,8 +25,6 @@ async function createStudent(request: Request) {
   const name = String(body.name ?? '').trim()
   if (!name) return json(400, { error: 'Student name is required.' })
 
-  const currentLessonCount = Number(body.currentLessonCount ?? 0)
-
   const { data, error } = await getSupabaseAdmin()
     .from('students')
     .insert({
@@ -35,7 +33,7 @@ async function createStudent(request: Request) {
       parent_phone: String(body.parentPhone ?? '').trim() || null,
       notes: String(body.notes ?? '').trim() || null,
       active: true,
-      current_lesson_count: Number.isFinite(currentLessonCount) ? Math.max(0, currentLessonCount) : 0,
+      current_lesson_count: 0,
     })
     .select('id,name,parent_name,parent_phone,notes,active,current_lesson_count')
     .single()

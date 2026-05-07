@@ -244,11 +244,12 @@ function HistoryRecord({ record, onOpenStudent }: { record: AttendanceRecord; on
 
 function StudentsView({ onOpenStudent }: { onOpenStudent: (id: string) => void }) {
   const [students, setStudents] = useState<Student[]>([])
+  const [sessions, setSessions] = useState<AttendanceSession[]>([])
+  const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [parentName, setParentName] = useState('')
   const [parentPhone, setParentPhone] = useState('')
   const [notes, setNotes] = useState('')
-  const [currentLessonCount, setCurrentLessonCount] = useState(0)
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
@@ -258,8 +259,12 @@ function StudentsView({ onOpenStudent }: { onOpenStudent: (id: string) => void }
   }, [])
 
   async function load() {
-    const active = await getActiveStudents()
+    const [active, history] = await Promise.all([
+      getActiveStudents(),
+      getAttendanceHistory(),
+    ])
     setStudents(active)
+    setSessions(history)
   }
 
   async function submit(event: React.FormEvent) {
@@ -269,12 +274,12 @@ function StudentsView({ onOpenStudent }: { onOpenStudent: (id: string) => void }
     setNotice('')
 
     try {
-      const student = await createStudent({ name, parentName, parentPhone, notes, currentLessonCount })
+      const student = await createStudent({ name, parentName, parentPhone, notes })
       setName('')
       setParentName('')
       setParentPhone('')
       setNotes('')
-      setCurrentLessonCount(0)
+      setShowForm(false)
       await load()
       setNotice(`${student.name} added.`)
     } catch (err: any) {
@@ -284,44 +289,82 @@ function StudentsView({ onOpenStudent }: { onOpenStudent: (id: string) => void }
     }
   }
 
+  function classDatesForStudent(studentId: string) {
+    const slots: Record<number, string> = {}
+    const records = sessions
+      .flatMap(session => (session.records ?? []).map(record => ({ ...record, classDate: session.class_date })))
+      .filter(record => record.student_id === studentId && record.present)
+      .sort((a, b) => new Date(a.classDate).getTime() - new Date(b.classDate).getTime())
+
+    records.forEach(record => {
+      if (record.lesson_count_after >= 1 && record.lesson_count_after <= 4) {
+        slots[record.lesson_count_after] = record.classDate
+      }
+    })
+
+    return slots
+  }
+
   return (
     <div className="stack">
       {notice && <div className="alert success">{notice}</div>}
       {error && <div className="alert danger">{error}</div>}
-      <form className="panel student-form" onSubmit={submit}>
+      <section className="panel student-form">
         <div className="panel-head">
           <div>
-            <h2>Add Student</h2>
-            <p>Enter student and parent details for attendance tracking.</p>
+            <h2>Students</h2>
+            <p>Add students first, then attendance dates populate Class 1-4 automatically.</p>
           </div>
+          <button className="success-button" type="button" onClick={() => setShowForm(value => !value)}>
+            {showForm ? 'Close' : 'Add Student'}
+          </button>
         </div>
-        <div className="form-grid">
-          <label>Student name<input value={name} onChange={event => setName(event.target.value)} required /></label>
-          <label>Parent name<input value={parentName} onChange={event => setParentName(event.target.value)} /></label>
-          <label>Parent phone<input value={parentPhone} onChange={event => setParentPhone(event.target.value)} inputMode="tel" /></label>
-          <label>Current lesson count<input type="number" min={0} value={currentLessonCount} onChange={event => setCurrentLessonCount(Number(event.target.value))} /></label>
-          <label className="full">Notes<textarea value={notes} onChange={event => setNotes(event.target.value)} rows={3} /></label>
-        </div>
-        <button className="primary form-submit" disabled={saving}>{saving ? 'Adding...' : 'Add Student'}</button>
-      </form>
+        {showForm && (
+          <form onSubmit={submit}>
+            <div className="form-grid">
+              <label>Student name<input value={name} onChange={event => setName(event.target.value)} required /></label>
+              <label>Parent name<input value={parentName} onChange={event => setParentName(event.target.value)} /></label>
+              <label>Contact number<input value={parentPhone} onChange={event => setParentPhone(event.target.value)} inputMode="tel" /></label>
+              <label className="full">Notes<textarea value={notes} onChange={event => setNotes(event.target.value)} rows={3} /></label>
+            </div>
+            <button className="primary form-submit" disabled={saving}>{saving ? 'Adding...' : 'Save Student'}</button>
+          </form>
+        )}
+      </section>
 
       <section className="panel">
         <div className="panel-head">
           <div>
-            <h2>Active Students</h2>
+            <h2>Class Roster</h2>
             <p>{students.length} students</p>
           </div>
         </div>
-        {students.length === 0 ? <div className="empty">No students yet.</div> : students.map(student => (
-          <div className="student-detail-row" key={student.id}>
-            <div>
-              <button className="student-name" onClick={() => onOpenStudent(student.id)}>{student.name}</button>
-              <p>{student.parent_name || 'No parent name'}{student.parent_phone ? ` · ${student.parent_phone}` : ''}</p>
-              {student.notes && <p>{student.notes}</p>}
+        {students.length === 0 ? <div className="empty">No students yet.</div> : (
+          <div className="roster-table">
+            <div className="roster-row roster-head">
+              <span>Student</span>
+              <span>Parent</span>
+              <span>Contact</span>
+              <span>Class 1</span>
+              <span>Class 2</span>
+              <span>Class 3</span>
+              <span>Class 4</span>
             </div>
-            <span className={`badge ${lessonBadge(student.current_lesson_count).tone}`}>{lessonBadge(student.current_lesson_count).text}</span>
+            {students.map(student => {
+              const dates = classDatesForStudent(student.id)
+              return (
+                <div className="roster-row" key={student.id}>
+                  <button className="student-name" onClick={() => onOpenStudent(student.id)}>{student.name}</button>
+                  <span>{student.parent_name || '-'}</span>
+                  <span>{student.parent_phone || '-'}</span>
+                  {[1, 2, 3, 4].map(slot => (
+                    <span key={slot}>{dates[slot] ? dateLabel(dates[slot]) : '-'}</span>
+                  ))}
+                </div>
+              )
+            })}
           </div>
-        ))}
+        )}
       </section>
     </div>
   )
